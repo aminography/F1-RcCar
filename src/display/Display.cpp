@@ -6,7 +6,7 @@
 #include "task/TaskScheduler.hpp"
 
 SSD1306Wire* display = nullptr;
-String telemeteryText;
+String telemetryText;
 String gyroscopeText;
 
 void refresh();
@@ -25,7 +25,7 @@ void Display::setup() {
     Scheduler.every(50, []() { refresh(); });
 }
 
-void Display::showTelemetery(const String& text) { telemeteryText = text; }
+void Display::showTelemetry(const String& text) { telemetryText = text; }
 
 void Display::showGyroscope(const String& text) { gyroscopeText = text; }
 
@@ -45,7 +45,7 @@ void drawFontFaceDemo() {
     display->drawString(0, 0, "UpTime: " + String(timeStr));
 
     display->setFont(ArialMT_Plain_16);
-    display->drawString(0, 18, telemeteryText);
+    display->drawString(0, 18, telemetryText);
 
     display->setFont(ArialMT_Plain_10);
     display->drawString(0, 38, gyroscopeText);

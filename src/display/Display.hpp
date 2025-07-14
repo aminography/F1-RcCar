@@ -4,7 +4,7 @@
 namespace Display {
 
 void setup();
-void showTelemetery(const String& text);
+void showTelemetry(const String& text);
 void showGyroscope(const String& text);
 
 }  // namespace Display

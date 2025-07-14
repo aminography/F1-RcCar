@@ -9,9 +9,9 @@ void VescUnit::setup() { vesc = new VescSerialInterface(); }
 
 void VescUnit::setCurrent(float value) { vesc->setCurrent(value); }
 
-VescUnit::TelemeteryData VescUnit::fetchTelemeteryData() {
+VescUnit::TelemetryData VescUnit::fetchTelemetryData() {
     if (vesc->getVescValues()) {
-        return VescUnit::TelemeteryData{vesc->data.avgMotorCurrent,
+        return VescUnit::TelemetryData{vesc->data.avgMotorCurrent,
                                         vesc->data.avgInputCurrent,
                                         vesc->data.dutyCycleNow,
                                         vesc->data.rpm,
@@ -30,5 +30,5 @@ VescUnit::TelemeteryData VescUnit::fetchTelemeteryData() {
                                         vesc->fw_version.major,
                                         vesc->fw_version.minor};
     }
-    return VescUnit::TelemeteryData{};
+    return VescUnit::TelemetryData{};
 }

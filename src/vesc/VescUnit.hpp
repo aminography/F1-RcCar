@@ -6,7 +6,7 @@
 class VescUnit {
     
    public:
-    struct TelemeteryData {
+    struct TelemetryData {
         float avgMotorCurrent;
         float avgInputCurrent;
         float dutyCycleNow;
@@ -29,7 +29,7 @@ class VescUnit {
 
     void setup();
     void setCurrent(float value);
-    TelemeteryData fetchTelemeteryData();
+    TelemetryData fetchTelemetryData();
 
    private:
     VescSerialInterface* vesc = nullptr;

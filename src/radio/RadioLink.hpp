@@ -9,12 +9,12 @@ class RadioLink {
     void setup();
     void update();
     void setChannelCallback(channelCallback);
-    void sendTelemeteryData();
+    void sendTelemetryData();
     void printAllChannels();
 
    private:
     #define CHANNEL_COUNT crsfProtocol::RC_CHANNEL_COUNT
 
     CrsfSerialInterface* crsf = nullptr;
-    static int scaleValue(int value, int scale = 100);
+    static int scaleValue(int microseconds);
 };

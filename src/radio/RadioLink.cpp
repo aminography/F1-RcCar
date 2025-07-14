@@ -13,12 +13,12 @@ void RadioLink::setup() {
         Serial.println("CRSF initialization failed!");
     }
 
-    crsf->setRcChannelsCallback([](serialReceiverLayer::rcChannels_t* rcChannels) {
+    crsf->setRcChannelsCallback([](serialReceiverLayer::rcChannels_t *rcChannels) {
         if (!rcChannels->failsafe) {
             // values are in range [-1.0, 1.0]
             float values[CHANNEL_COUNT];
             std::transform(rcChannels->value, rcChannels->value + CHANNEL_COUNT, values,
-                           [](uint16_t item) { return scaleValue(item, 1000) / 1000.0; });
+                           [](const uint16_t item) { return scaleValue(item); });
 
             if (_channelCallback != nullptr) {
                 _channelCallback(values);
@@ -33,7 +33,7 @@ void RadioLink::update() { crsf->update(); }
 
 void RadioLink::setChannelCallback(channelCallback callback) { _channelCallback = callback; }
 
-void RadioLink::sendTelemeteryData() {
+void RadioLink::sendTelemetryData() {
     // crsf->telessmetryWriteBattery(throttle, throttle, throttle, throttle);
 }
 
@@ -54,9 +54,10 @@ void RadioLink::printAllChannels() {
     }
 }
 
-int RadioLink::scaleValue(int value, int scale) {
-    int scaled_value = ((int32_t)(value - 992) * scale) / 820;
+int RadioLink::scaleValue(const int microseconds) {
+    const int scale = 1000;
+    float scaled_value = (microseconds - 992) * scale / 820;
     if (scaled_value < -scale) scaled_value = -scale;
     if (scaled_value > scale) scaled_value = scale;
-    return scaled_value;
+    return scaled_value / scale;
 }

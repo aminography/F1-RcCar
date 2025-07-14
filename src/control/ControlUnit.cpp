@@ -23,10 +23,10 @@ void ControlUnit::setup() {
     radioLink.setup();
     radioLink.setChannelCallback([this](float* values) { onRadioChannelsReceived(values); });
     Scheduler.every(100, []() {
-        VescUnit::TelemeteryData telemetery = vescUnit.fetchTelemeteryData();
-        Display::showTelemetery("RPM: " + String((int)telemetery.rpm));
+        VescUnit::TelemetryData telemetry = vescUnit.fetchTelemetryData();
+        Display::showTelemetry("RPM: " + String((int)telemetry.rpm));
         Display::showGyroscope(gyroscope.getAcceleration());
-        // radioLink.sendTelemeteryD ata();
+        // radioLink.sendTelemetryD ata();
     });
 
     Scheduler.every(200, []() { radioLink.printAllChannels(); });
