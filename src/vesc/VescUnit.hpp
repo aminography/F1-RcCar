@@ -28,7 +28,7 @@ class VescUnit {
     };
 
     void setup();
-    void setCurrent(float value) const;
+    void setDuty(float value) const;
     TelemetryData fetchTelemetryData() const;
 
    private:

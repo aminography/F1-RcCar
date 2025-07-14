@@ -31,6 +31,7 @@ namespace Address {
 #define STEERING_SERVO_SIGNAL_PIN 42
 #define DRS_SERVO_SIGNAL_PIN 47
 
+#define MUX_DRS_PIN 0
 #define MUX_MOTOR_FAN_PIN 1
 #define MUX_OVERALL_FAN_PIN 2
 #define MUX_BRAKE_BLINK_PIN 3

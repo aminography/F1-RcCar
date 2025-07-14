@@ -16,5 +16,5 @@ class RadioLink {
     #define CHANNEL_COUNT crsfProtocol::RC_CHANNEL_COUNT
 
     CrsfSerialInterface* crsf = nullptr;
-    static int scaleValue(int microseconds);
+    static float scaleValue(float microseconds);
 };

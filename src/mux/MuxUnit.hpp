@@ -6,6 +6,7 @@ class MuxUnit {
 
    public:
     void setup();
+    void setDrsEnabled(bool enabled) const;
     void setVescMosfetEnabled(bool enabled) const;
     void setMotorFanEnabled(bool enabled) const;
     void setOverallFanEnabled(bool enabled) const;

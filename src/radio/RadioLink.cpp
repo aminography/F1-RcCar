@@ -53,9 +53,9 @@ void RadioLink::printAllChannels() const {
     }
 }
 
-int RadioLink::scaleValue(const int microseconds) {
+float RadioLink::scaleValue(const float microseconds) {
     constexpr int scale = 1000;
-    int scaled_value = (microseconds - 992) * scale / 820;
+    float scaled_value = (microseconds - 992.0f) * scale / 820.0f;
     if (scaled_value < -scale) scaled_value = -scale;
     if (scaled_value > scale) scaled_value = scale;
     return scaled_value / scale;

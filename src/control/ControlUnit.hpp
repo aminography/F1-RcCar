@@ -23,7 +23,8 @@ class ControlUnit {
 
     void onRadioChannelsReceived(const float* values);
     void updateDriveMode(float value);
+    void updateDRS(float value);
 
-    static float mapSteeringValue(float value);
-    static float scaleThrottle(const DriveMode &driveMode, float throttleInput, float brakeInput);
+    static float mapSteeringValue(const DriveMode &driveMode, float value);
+    static float scaleThrottle(const DriveMode &driveMode, float throttleValue, float brakeValue);
 };

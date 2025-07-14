@@ -3,7 +3,9 @@
 
 void VescUnit::setup() { vesc = new VescSerialInterface(); }
 
-void VescUnit::setCurrent(const float value) const { vesc->setCurrent(value); }
+void VescUnit::setDuty(const float value) const {
+    vesc->setDuty(value);
+}
 
 VescUnit::TelemetryData VescUnit::fetchTelemetryData() const {
     if (vesc->getVescValues()) {
