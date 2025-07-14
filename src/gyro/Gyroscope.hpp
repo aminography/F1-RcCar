@@ -3,7 +3,7 @@
 
 class Gyroscope {
    public:
-    void setup();
-    String getAcceleration();
-    void readIMU();
+    static void setup();
+    static String getAcceleration();
+    static void readIMU();
 };

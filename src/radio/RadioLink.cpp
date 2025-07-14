@@ -1,10 +1,9 @@
 #include "radio/RadioLink.hpp"
 
 #include "Arduino.h"
-#include "SerialReceiver/CRSF/CRSF.hpp"
 #include "radio/CrsfSerialInterface.hpp"
 
-static RadioLink::channelCallback _channelCallback;
+static RadioLink::ChannelCallback channelCallback;
 
 void RadioLink::setup() {
     crsf = new CrsfSerialInterface();
@@ -20,8 +19,8 @@ void RadioLink::setup() {
             std::transform(rcChannels->value, rcChannels->value + CHANNEL_COUNT, values,
                            [](const uint16_t item) { return scaleValue(item); });
 
-            if (_channelCallback != nullptr) {
-                _channelCallback(values);
+            if (channelCallback != nullptr) {
+                channelCallback(values);
             }
         } else {
             Serial.println("RadioLink failsafe active!");
@@ -31,15 +30,15 @@ void RadioLink::setup() {
 
 void RadioLink::update() { crsf->update(); }
 
-void RadioLink::setChannelCallback(channelCallback callback) { _channelCallback = callback; }
+void RadioLink::setChannelCallback(const ChannelCallback &callback) { channelCallback = callback; }
 
 void RadioLink::sendTelemetryData() {
     // crsf->telessmetryWriteBattery(throttle, throttle, throttle, throttle);
 }
 
-void RadioLink::printAllChannels() {
+void RadioLink::printAllChannels() const {
     static unsigned long lastPrint = 0;
-    unsigned long now = millis();
+    const unsigned long now = millis();
     if (now - lastPrint >= 100) {
         lastPrint = now;
 
@@ -55,8 +54,8 @@ void RadioLink::printAllChannels() {
 }
 
 int RadioLink::scaleValue(const int microseconds) {
-    const int scale = 1000;
-    float scaled_value = (microseconds - 992) * scale / 820;
+    constexpr int scale = 1000;
+    int scaled_value = (microseconds - 992) * scale / 820;
     if (scaled_value < -scale) scaled_value = -scale;
     if (scaled_value > scale) scaled_value = scale;
     return scaled_value / scale;

@@ -1,6 +1,10 @@
 #pragma once
-
-#include "control/DriveMode.hpp"
+#include "DriveMode.hpp"
+#include "ESP32Servo.h"
+#include "gyro/Gyroscope.hpp"
+#include "mux/MuxUnit.hpp"
+#include "radio/RadioLink.hpp"
+#include "vesc/VescUnit.hpp"
 
 class ControlUnit {
    public:
@@ -8,8 +12,18 @@ class ControlUnit {
     void loop();
 
    private:
-    void onRadioChannelsReceived(float* values);
+    DriveMode driveMode = DriveModes::SPORT;
+
+    RadioLink radioLink;
+    VescUnit vescUnit;
+    Servo steeringServo;
+    Servo drsServo;
+    MuxUnit muxUnit;
+    Gyroscope gyroscope;
+
+    void onRadioChannelsReceived(const float* values);
     void updateDriveMode(float value);
-    float mapSteeringValue(float value);
-    float scaleThrottle(float throttleInput, float brakeInput);
+
+    static float mapSteeringValue(float value);
+    static float scaleThrottle(const DriveMode &driveMode, float throttleInput, float brakeInput);
 };

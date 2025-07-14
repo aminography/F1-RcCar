@@ -6,12 +6,12 @@ class MuxUnit {
 
    public:
     void setup();
-    void setVescMosfetEnabled(bool enabled);
-    void setMotorFanEnabled(bool enabled);
-    void setOverallFanEnabled(bool enabled);
-    void setBrakeLedEnabled(bool enabled);
+    void setVescMosfetEnabled(bool enabled) const;
+    void setMotorFanEnabled(bool enabled) const;
+    void setOverallFanEnabled(bool enabled) const;
+    void setBrakeLedEnabled(bool enabled) const;
 
    private:
     PCF8575* expander = nullptr;
-    void setPin(int pin, bool enabled);
+    void setPin(int pin, bool enabled) const;
 };

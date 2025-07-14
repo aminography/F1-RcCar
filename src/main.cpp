@@ -9,7 +9,7 @@ ControlUnit controlUnit;
 
 void setup() {
     Serial.begin(115200);
-    while (!Serial);
+    while (!Serial) {}
 
     I2CBus::setup();
     Display::setup();

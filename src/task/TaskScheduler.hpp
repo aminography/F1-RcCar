@@ -2,23 +2,22 @@
 #include <Arduino.h>
 
 #include <functional>
+#include <utility>
 #include <vector>
 
 class TaskScheduler {
-   public:
-    using Callback = std::function<void(void)>;
+public:
+    using Callback = std::function<void()>;
 
-    int every(unsigned long interval, Callback callback);
-    int once(unsigned long delay, Callback callback);
-
+    int every(unsigned long interval, const Callback &callback);
+    int once(unsigned long delay, const Callback &callback);
     void cancel(int id);
     void pause(int id);
     void resume(int id);
     void reschedule(int id, unsigned long newInterval);
-
     void loop();
 
-   private:
+private:
     struct Task {
         int id;
         Callback callback;
@@ -28,10 +27,10 @@ class TaskScheduler {
         bool completed;
         bool paused;
 
-        Task(int id, Callback cb, unsigned long intv, unsigned long last, bool rep)
+        Task(const int id, Callback cb, const unsigned long interval, const unsigned long last, const bool rep)
             : id(id),
-              callback(cb),
-              interval(intv),
+              callback(std::move(cb)),
+              interval(interval),
               lastRun(last),
               repeat(rep),
               completed(false),
@@ -41,7 +40,7 @@ class TaskScheduler {
     std::vector<Task> tasks;
     int nextId = 1;
 
-    Task* findTask(int id);
+    Task *findTask(int id);
 };
 
 // the global instance
