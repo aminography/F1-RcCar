@@ -1,13 +1,10 @@
 #include "gyro/Gyroscope.hpp"
-
 #include <Adafruit_LSM6DSO32.h>
-
 #include "Address.hpp"
-#include "i2c/I2CBus.hpp"
 
 Adafruit_LSM6DSO32 dso32;
 
-void Gyroscope::setup(void) {
+void Gyroscope::setup() {
     if (dso32.begin_I2C(I2C_GYROSCOPE_ADDRESS, &I2C_WIRE)) {
         Serial.println("LSM6DSO32 Found!");
 
@@ -47,7 +44,7 @@ void Gyroscope::setup(void) {
                 Serial.println("2000 degrees/s");
                 break;
             case ISM330DHCX_GYRO_RANGE_4000_DPS:
-                break;  // unsupported range for the DSO32
+                break; // unsupported range for the DSO32
         }
 
         // dso32.setAccelDataRate(LSM6DS_RATE_12_5_HZ);

@@ -28,8 +28,8 @@ class VescUnit {
     };
 
     void setup();
-    void setCurrent(float value);
-    TelemetryData fetchTelemetryData();
+    void setDuty(float value) const;
+    TelemetryData fetchTelemetryData() const;
 
    private:
     VescSerialInterface* vesc = nullptr;

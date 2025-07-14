@@ -4,17 +4,17 @@
 
 class RadioLink {
    public:
-    typedef std::function<void(float*)> channelCallback;
+    typedef std::function<void(float*)> ChannelCallback;
 
     void setup();
     void update();
-    void setChannelCallback(channelCallback);
     void sendTelemetryData();
-    void printAllChannels();
+    void printAllChannels() const;
+    static void setChannelCallback(const ChannelCallback &);
 
    private:
     #define CHANNEL_COUNT crsfProtocol::RC_CHANNEL_COUNT
 
     CrsfSerialInterface* crsf = nullptr;
-    static int scaleValue(int microseconds);
+    static float scaleValue(float microseconds);
 };

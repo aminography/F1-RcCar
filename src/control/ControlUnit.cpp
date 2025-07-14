@@ -2,34 +2,24 @@
 
 #include <ESP32Servo.h>
 
-#include "control/DriveMode.hpp"
 #include "display/Display.hpp"
-#include "gyro/Gyroscope.hpp"
-#include "mux/MuxUnit.hpp"
-#include "radio/RadioLink.hpp"
 #include "task/TaskScheduler.hpp"
-#include "vesc/VescUnit.hpp"
-
-RadioLink radioLink;
-VescUnit vescUnit;
-Servo steeringServo;
-Servo drsServo;
-MuxUnit muxUnit;
-Gyroscope gyroscope;
-
-DriveMode driveMode = DriveModes::SPORT;
 
 void ControlUnit::setup() {
     radioLink.setup();
-    radioLink.setChannelCallback([this](float* values) { onRadioChannelsReceived(values); });
-    Scheduler.every(100, []() {
-        VescUnit::TelemetryData telemetry = vescUnit.fetchTelemetryData();
-        Display::showTelemetry("RPM: " + String((int)telemetry.rpm));
+    radioLink.setChannelCallback([this](const float *values) { onRadioChannelsReceived(values); });
+    Scheduler.every(100, [this] {
+        const VescUnit::TelemetryData telemetry = vescUnit.fetchTelemetryData();
+        if (telemetry.error == FAULT_CODE_NONE) {
+            Display::showTelemetry("RPM: " + String(static_cast<int>(telemetry.rpm)));
+        } else {
+            Display::showTelemetry("Error: " + String(telemetry.error));
+        }
         Display::showGyroscope(gyroscope.getAcceleration());
         // radioLink.sendTelemetryD ata();
     });
 
-    Scheduler.every(200, []() { radioLink.printAllChannels(); });
+    // Scheduler.every(200, [this] { radioLink.printAllChannels(); });
 
     vescUnit.setup();
     muxUnit.setup();
@@ -44,84 +34,95 @@ void ControlUnit::setup() {
 
 void ControlUnit::loop() { radioLink.update(); }
 
-void ControlUnit::onRadioChannelsReceived(float* values) {
+void ControlUnit::onRadioChannelsReceived(const float *values) {
     updateDriveMode(values[CH_9_DRIVE_MODE]);
-    vescUnit.setCurrent(scaleThrottle(values[CH_2_THROTTLE], values[CH_5_BRAKE]));
+    vescUnit.setDuty(scaleThrottle(driveMode, values[CH_2_THROTTLE], values[CH_5_BRAKE]));
 
-    steeringServo.write(mapSteeringValue(values[CH_1_STEERING_SERVO]));
-    drsServo.write(values[CH_7_DRS_ENABLED] < 0.5 ? 0 : 180);
+    steeringServo.write(mapSteeringValue(driveMode, values[CH_1_STEERING_SERVO]));
+
+    updateDRS(values[CH_7_DRS_ENABLED]);
 
     muxUnit.setBrakeLedEnabled(values[CH_5_BRAKE] > 0.5);
     muxUnit.setVescMosfetEnabled(values[CH_6_VESC_MOSFET] > 0.5);
     muxUnit.setMotorFanEnabled(values[CH_8_MOTOR_FAN] > 0.5);
 }
 
-float ControlUnit::mapSteeringValue(float value) {
+float ControlUnit::mapSteeringValue(const DriveMode &driveMode, const float value) {
     // mapping in range [60, 106]
-    return ((value * 1000 + 999) * (106 - 60)) / (999 + 999) + 60;
+    return (value * 1000 + 999) * (106 - 60) / (999 + 999) + 60;
 }
 
-void ControlUnit::updateDriveMode(float value) {
-    if (value < -0.5)
-        driveMode = DriveModes::ECO;
-    else if (value < 0.5)
-        driveMode = DriveModes::SPORT;
-    else
-        driveMode = DriveModes::DRAG;
+void ControlUnit::updateDRS(const float value) {
+    static int previous = 0;
+    const int current = value < 0.5 ? 0 : 180;
+    if (current != previous) {
+        previous = current;
+        muxUnit.setDrsEnabled(true);
+        Scheduler.once(100, [this, current] { drsServo.write(current); });
+        Scheduler.once(1000, [this] { muxUnit.setDrsEnabled(false); });
+    }
 }
 
-float ControlUnit::scaleThrottle(float throttleInput, float brakeInput) {
-    static float previousCurrent = 0.0;
-    static bool reversing = false;
-    static unsigned long brakeTimeStart = 0;
-    static const unsigned long reverseHoldTime = 1000;  // 1 second to activate reverse
+void ControlUnit::updateDriveMode(const float value) {
+    if (value > 0.5) driveMode = DriveModes::SPORT;
+    else if (value > -0.5) driveMode = DriveModes::ECO;
+    else driveMode = DriveModes::DRAG;
+}
 
-    const bool inDeadzone = fabs(throttleInput) < 0.05;
-    const bool applyingBrake = brakeInput > 0.5f;
+float ControlUnit::scaleThrottle(const DriveMode &driveMode, const float throttleValue, const float brakeValue) {
+    if (fabs(throttleValue) < 0.05) return 0;
+    return throttleValue * driveMode.maxCurrent;
 
-    float targetCurrent = 0.0;
-
-    if (inDeadzone || applyingBrake) {
-        // Start brake timer if not reversing yet
-        if (!reversing) {
-            if (brakeTimeStart == 0) {
-                brakeTimeStart = millis();
-            } else if (millis() - brakeTimeStart > reverseHoldTime) {
-                reversing = true;
-            }
-        }
-
-        // Apply braking current
-        targetCurrent = driveMode.brakeCurrent;
-
-    } else {
-        // Reset brake timer when throttle is applied
-        brakeTimeStart = 0;
-
-        if (reversing && throttleInput > 0.2f) {
-            reversing = false;  // switch back to forward when strong input
-        }
-
-        // Calculate target drive current
-        float current = throttleInput * driveMode.maxCurrent;
-
-        if (reversing) {
-            targetCurrent = -fabs(current);  // force reverse direction
-        } else {
-            targetCurrent = fabs(current);  // forward only
-        }
-    }
-
-    // Apply acceleration ramping (slew rate limiter)
-    float delta = targetCurrent - previousCurrent;
-    float maxDelta = driveMode.accelerationRamp;
-
-    if (delta > maxDelta) {
-        delta = maxDelta;
-    } else if (delta < -maxDelta) {
-        delta = -maxDelta;
-    }
-
-    previousCurrent += delta;
-    return previousCurrent;
+    // static float previousCurrent = 0.0;
+    // static bool reversing = false;
+    // static unsigned long brakeTimeStart = 0;
+    // static constexpr unsigned long reverseHoldTime = 1000; // 1 second to activate reverse
+    //
+    // const bool inDeadZone = fabs(throttleInput) < 0.05;
+    // const bool applyingBrake = brakeInput > 0.5f;
+    //
+    // float targetCurrent = 0.0;
+    //
+    // if (inDeadZone || applyingBrake) {
+    //     // Start brake timer if not reversing yet
+    //     if (!reversing) {
+    //         if (brakeTimeStart == 0) {
+    //             brakeTimeStart = millis();
+    //         } else if (millis() - brakeTimeStart > reverseHoldTime) {
+    //             reversing = true;
+    //         }
+    //     }
+    //
+    //     // Apply braking current
+    //     targetCurrent = driveMode.brakeCurrent;
+    // } else {
+    //     // Reset brake timer when throttle is applied
+    //     brakeTimeStart = 0;
+    //
+    //     if (reversing && throttleInput > 0.2f) {
+    //         reversing = false; // switch back to forward when strong input
+    //     }
+    //
+    //     // Calculate target drive current
+    //     const float current = throttleInput * driveMode.maxCurrent;
+    //
+    //     if (reversing) {
+    //         targetCurrent = -fabs(current); // force reverse direction
+    //     } else {
+    //         targetCurrent = fabs(current); // forward only
+    //     }
+    // }
+    //
+    // // Apply acceleration ramping (slew rate limiter)
+    // float delta = targetCurrent - previousCurrent;
+    // const float maxDelta = driveMode.accelerationRamp;
+    //
+    // if (delta > maxDelta) {
+    //     delta = maxDelta;
+    // } else if (delta < -maxDelta) {
+    //     delta = -maxDelta;
+    // }
+    //
+    // previousCurrent += delta;
+    // return previousCurrent;
 }
