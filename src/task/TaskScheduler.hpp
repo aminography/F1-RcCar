@@ -1,9 +1,9 @@
 #pragma once
-#include <Arduino.h>
 
-#include <functional>
-#include <utility>
-#include <vector>
+#include "Arduino.h"
+#include "functional"
+#include "utility"
+#include "vector"
 
 class TaskScheduler {
 public:
@@ -34,7 +34,8 @@ private:
               lastRun(last),
               repeat(rep),
               completed(false),
-              paused(false) {}
+              paused(false) {
+        }
     };
 
     std::vector<Task> tasks;

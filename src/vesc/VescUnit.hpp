@@ -1,11 +1,10 @@
 #pragma once
 
 #include "VescUart.h"
-#include "vesc/VescSerialInterface.hpp"
+#include "VescSerialInterface.hpp"
 
 class VescUnit {
-    
-   public:
+public:
     struct TelemetryData {
         float avgMotorCurrent;
         float avgInputCurrent;
@@ -21,16 +20,19 @@ class VescUnit {
         float tempMosfet;
         float tempMotor;
         float pidPos;
-        uint8_t id;
-        mc_fault_code error;
-        uint8_t fwVersionMajor;
-        uint8_t fwVersionMinor;
+        int id;
+        int errorCode;
+        String error;
+        int fwVersionMajor;
+        int fwVersionMinor;
     };
 
     void setup();
     void setDuty(float value) const;
+    void setBrakeCurrent(float value) const;
     TelemetryData fetchTelemetryData() const;
 
-   private:
-    VescSerialInterface* vesc = nullptr;
+private:
+    VescSerialInterface *vesc = nullptr;
+    static String getFaultCodeName(mc_fault_code code);
 };

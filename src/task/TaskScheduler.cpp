@@ -1,6 +1,6 @@
 #include "TaskScheduler.hpp"
 
-#include <algorithm>
+#include "algorithm"
 
 // the global instance
 TaskScheduler Scheduler;

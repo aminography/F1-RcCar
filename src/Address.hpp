@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Wire.h>
+#include "Wire.h"
 
 namespace Address {
 
@@ -38,4 +38,4 @@ namespace Address {
 #define MUX_BRAKE_CONSTANT_PIN 4
 #define MUX_VESC_MOSFET_PIN 7
 
-};  // namespace Address
+}; // namespace Address
