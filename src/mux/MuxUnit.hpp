@@ -3,8 +3,7 @@
 #include "PCF8575.h"
 
 class MuxUnit {
-
-   public:
+public:
     void setup();
     void setDrsEnabled(bool enabled) const;
     void setVescMosfetEnabled(bool enabled) const;
@@ -12,7 +11,7 @@ class MuxUnit {
     void setOverallFanEnabled(bool enabled) const;
     void setBrakeLedEnabled(bool enabled) const;
 
-   private:
-    PCF8575* expander = nullptr;
+private:
+    PCF8575 *expander = nullptr;
     void setPin(int pin, bool enabled) const;
 };

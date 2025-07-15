@@ -2,27 +2,39 @@
 
 struct DriveMode {
     const char *name;
-    float maxCurrent;
-    float brakeCurrent;
+    float maxPower;
+    float brakeForce;
     float accelerationRamp;
 
-    constexpr DriveMode(const char *name, const float maxCurrent, const float brakeCurrent,
-                        const float accelerationRamp)
-        : name(name),
-          maxCurrent(maxCurrent),
-          brakeCurrent(brakeCurrent),
-          accelerationRamp(accelerationRamp) {
+    constexpr DriveMode(
+        const char *name,
+        const float maxPower,
+        const float brakeForce,
+        const float accelerationRamp
+    ) : name(name),
+        maxPower(maxPower),
+        brakeForce(brakeForce),
+        accelerationRamp(accelerationRamp) {
     }
 };
 
 namespace DriveModes {
     constexpr DriveMode ECO{
-        "Eco", 0.5f, -10.0f, 0.3f
+        "Eco",
+        0.75f,
+        -10.0f,
+        0.01f
     };
     constexpr DriveMode SPORT{
-        "Sport", 0.75f, -20.0f, 0.6f
+        "Sport",
+        1.0f,
+        -20.0f,
+        0.1f
     };
     constexpr DriveMode DRAG{
-        "Drag", 1.0f, -35.0f, 1.0f
+        "Drag",
+        1.0f,
+        -30.0f,
+        0.2f
     };
 } // namespace DriveModes

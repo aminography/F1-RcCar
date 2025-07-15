@@ -1,5 +1,6 @@
-#include "gyro/Gyroscope.hpp"
-#include <Adafruit_LSM6DSO32.h>
+#include "Gyroscope.hpp"
+
+#include "Adafruit_LSM6DSO32.h"
 #include "Address.hpp"
 
 Adafruit_LSM6DSO32 dso32;

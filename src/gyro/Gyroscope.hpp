@@ -1,8 +1,9 @@
 #pragma once
-#include <Arduino.h>
+
+#include "WString.h"
 
 class Gyroscope {
-   public:
+public:
     static void setup();
     static String getAcceleration();
     static void readIMU();

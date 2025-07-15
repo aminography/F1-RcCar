@@ -1,7 +1,7 @@
-#include "radio/RadioLink.hpp"
+#include "RadioLink.hpp"
 
 #include "Arduino.h"
-#include "radio/CrsfSerialInterface.hpp"
+#include "CrsfSerialInterface.hpp"
 
 static RadioLink::ChannelCallback channelCallback;
 
@@ -28,9 +28,13 @@ void RadioLink::setup() {
     });
 }
 
-void RadioLink::update() { crsf->update(); }
+void RadioLink::update() const {
+    crsf->update();
+}
 
-void RadioLink::setChannelCallback(const ChannelCallback &callback) { channelCallback = callback; }
+void RadioLink::setChannelCallback(const ChannelCallback &callback) {
+    channelCallback = callback;
+}
 
 void RadioLink::sendTelemetryData() {
     // crsf->telessmetryWriteBattery(throttle, throttle, throttle, throttle);
