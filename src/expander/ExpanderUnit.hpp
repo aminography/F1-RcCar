@@ -2,7 +2,7 @@
 
 #include "PCF8575.h"
 
-class MuxUnit {
+class ExpanderUnit {
 public:
     void setup();
     void setDrsEnabled(bool enabled) const;
