@@ -3,7 +3,7 @@
 #include "DriveMode.hpp"
 #include "ESP32Servo.h"
 #include "gyro/Gyroscope.hpp"
-#include "mux/MuxUnit.hpp"
+#include "expander/ExpanderUnit.hpp"
 #include "radio/RadioLink.hpp"
 #include "vesc/VescUnit.hpp"
 
@@ -19,7 +19,7 @@ private:
     VescUnit vescUnit;
     Servo steeringServo;
     Servo drsServo;
-    MuxUnit muxUnit;
+    ExpanderUnit expanderUnit;
     Gyroscope gyroscope;
 
     void onRadioChannelsReceived(const float *values);

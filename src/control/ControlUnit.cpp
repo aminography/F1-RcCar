@@ -21,7 +21,7 @@ void ControlUnit::setup() {
     // Scheduler.every(200, [this] { radioLink.printAllChannels(); });
 
     vescUnit.setup();
-    muxUnit.setup();
+    expanderUnit.setup();
     gyroscope.setup();
 
     steeringServo.setPeriodHertz(50);
@@ -39,9 +39,9 @@ void ControlUnit::onRadioChannelsReceived(const float *values) {
     updateSteeringState(values[CH_1_STEERING_SERVO]);
     updateDrsState(values[CH_7_DRS_ENABLED]);
 
-    muxUnit.setBrakeLedEnabled(values[CH_5_BRAKE] > 0.5);
-    muxUnit.setVescMosfetEnabled(values[CH_6_VESC_MOSFET] > 0.5);
-    muxUnit.setMotorFanEnabled(values[CH_8_MOTOR_FAN] > 0.5);
+    expanderUnit.setBrakeLedEnabled(values[CH_5_BRAKE] > 0.5);
+    expanderUnit.setVescMosfetEnabled(values[CH_6_VESC_MOSFET] > 0.5);
+    expanderUnit.setMotorFanEnabled(values[CH_8_MOTOR_FAN] > 0.5);
 }
 
 void ControlUnit::updateSteeringState(const float value) {
@@ -58,12 +58,12 @@ void ControlUnit::updateSteeringState(const float value) {
 void ControlUnit::updateDrsState(const float value) {
     static int previous = 0;
     static int debounceId = 0;
-    static const TaskScheduler::Callback disableDrs = [this] { muxUnit.setDrsEnabled(false); };
+    static const TaskScheduler::Callback disableDrs = [this] { expanderUnit.setDrsEnabled(false); };
 
     const int current = value < 0.5 ? 0 : 180;
     if (current != previous) {
         previous = current;
-        muxUnit.setDrsEnabled(true);
+        expanderUnit.setDrsEnabled(true);
         drsServo.write(current);
 
         if (debounceId == 0) {
