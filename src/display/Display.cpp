@@ -6,6 +6,7 @@
 
 SSD1306Wire *display = nullptr;
 String telemetryText;
+String batteryText;
 String gyroscopeText;
 
 void refresh();
@@ -32,6 +33,10 @@ void Display::showGyroscope(const String &text) {
     gyroscopeText = text;
 }
 
+void Display::showBattery(const String &text) {
+    batteryText = text;
+}
+
 void refresh() {
     display->clear();
     drawFontFaceDemo();
@@ -39,19 +44,20 @@ void refresh() {
 }
 
 void drawFontFaceDemo() {
-    display->setTextAlignment(TEXT_ALIGN_LEFT);
-    display->setFont(ArialMT_Plain_10);
-
     const unsigned long time = millis();
     char timeStr[9];
     sprintf(timeStr, "%02u:%02u:%02u", time / 60000, (time / 1000) % 60, (time / 10) % 100);
-    display->drawString(0, 0, "UpTime: " + String(timeStr));
+
+    display->setTextAlignment(TEXT_ALIGN_LEFT);
+    display->setFont(ArialMT_Plain_10);
+    display->drawString(0, 0, String(timeStr));
+    display->drawString(64, 0, batteryText);
 
     display->setFont(ArialMT_Plain_16);
-    display->drawString(0, 18, telemetryText);
+    display->drawString(0, 16, telemetryText);
 
     display->setFont(ArialMT_Plain_10);
-    display->drawString(0, 38, gyroscopeText);
+    display->drawString(0, 40, gyroscopeText);
 }
 
 void VextON() {

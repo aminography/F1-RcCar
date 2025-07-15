@@ -9,6 +9,7 @@ void ControlUnit::setup() {
     radioLink.setChannelCallback([this](const float *values) { onRadioChannelsReceived(values); });
     Scheduler.every(100, [this] {
         const VescUnit::TelemetryData telemetry = vescUnit.fetchTelemetryData();
+
         if (telemetry.errorCode == FAULT_CODE_NONE) {
             Display::showTelemetry("RPM: " + String(static_cast<int>(telemetry.rpm)));
         } else {
@@ -16,6 +17,10 @@ void ControlUnit::setup() {
         }
         Display::showGyroscope(gyroscope.getAcceleration());
         // radioLink.sendTelemetryD ata();
+
+        double battery_percentage = (telemetry.inpVoltage - 9.9) / (13.05 - 9.9) * 100;
+        battery_percentage = min(max(battery_percentage, 0.0), 100.0);
+        Display::showBattery(String(telemetry.inpVoltage) + "v   " + String(static_cast<int>(battery_percentage)) + "%");
     });
 
     // Scheduler.every(200, [this] { radioLink.printAllChannels(); });
@@ -58,18 +63,23 @@ void ControlUnit::updateSteeringState(const float value) {
 void ControlUnit::updateDrsState(const float value) {
     static int previous = 0;
     static int debounceId = 0;
-    static const TaskScheduler::Callback disableDrs = [this] { expanderUnit.setDrsEnabled(false); };
+
+    static const TaskScheduler::Callback drsPowerOff = [this] {
+        debounceId = 0;
+        expanderUnit.setDrsPowerEnabled(false);
+    };
 
     const int current = value < 0.5 ? 0 : 180;
     if (current != previous) {
         previous = current;
-        expanderUnit.setDrsEnabled(true);
+        expanderUnit.setDrsPowerEnabled(true);
         drsServo.write(current);
 
+        static constexpr int DEBOUNCE_DELAY = 1500;
         if (debounceId == 0) {
-            debounceId = Scheduler.once(1000, disableDrs);
+            debounceId = Scheduler.once(DEBOUNCE_DELAY, drsPowerOff);
         } else {
-            Scheduler.reschedule(debounceId, 1000);
+            Scheduler.reschedule(debounceId, DEBOUNCE_DELAY);
         }
     }
 }
@@ -82,14 +92,21 @@ void ControlUnit::updateDriveMode(const float value) {
 
 void ControlUnit::updateThrottleState(const float throttleValue, const float brakeValue) const {
     static float currentThrottle = 0.0;
-    float targetThrottle = throttleValue * driveMode.maxPower;
-    if (fabs(targetThrottle) < 0.05) targetThrottle = 0; // filtering out dead zone
+    float targetThrottle = 0;
 
     if (brakeValue > 0.5f) {
+        currentThrottle = 0;
+        vescUnit.setDuty(currentThrottle);
         vescUnit.setBrakeCurrent(driveMode.brakeForce);
-        targetThrottle = 0;
+        return;
+    }
+
+    if (fabs(throttleValue) < 0.05) {
+        targetThrottle = 0; // filtering out dead zone
+    } else if (throttleValue > 0) {
+        targetThrottle = throttleValue * driveMode.maxPower;
     } else {
-        vescUnit.setBrakeCurrent(0);
+        targetThrottle = throttleValue * driveMode.reversePower;
     }
 
     // Apply acceleration ramping
