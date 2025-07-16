@@ -91,11 +91,11 @@ void ControlUnit::updateDriveMode(const float value) {
     else driveMode = DriveModes::DRAG;
 }
 
-void ControlUnit::updateThrottleState(float throttleValue, const bool isBraking) const {
+void ControlUnit::updateThrottleState(const float throttleValue, const bool isBraking) const {
     // Throttle shaping helps to feel more like analog gas pedal behavior, especially useful at low speeds.
     // y = sign(x) * (∣x∣^expo)
-    constexpr float sign = throttleValue < 0 ? -1 : 1;
-    throttleValue = sign * pow(fabs(throttleValue), driveMode.throttleExpo);
+    const float sign = throttleValue < 0 ? -1 : 1;
+    const float shapedThrottle = sign * pow(fabs(throttleValue), driveMode.throttleExpo);
 
     static float currentThrottle = 0.0;
     float targetThrottle = 0;
@@ -107,12 +107,12 @@ void ControlUnit::updateThrottleState(float throttleValue, const bool isBraking)
         return;
     }
 
-    if (fabs(throttleValue) < 0.05) {
+    if (fabs(shapedThrottle) < 0.05) {
         targetThrottle = 0; // filtering out dead zone
-    } else if (throttleValue > 0) {
-        targetThrottle = throttleValue * driveMode.maxPower;
+    } else if (shapedThrottle > 0) {
+        targetThrottle = shapedThrottle * driveMode.maxPower;
     } else {
-        targetThrottle = throttleValue * driveMode.reversePower;
+        targetThrottle = shapedThrottle * driveMode.reversePower;
     }
 
     // Apply acceleration ramping
