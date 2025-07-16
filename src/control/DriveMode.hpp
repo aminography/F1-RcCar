@@ -6,18 +6,21 @@ struct DriveMode {
     float reversePower;
     float brakeForce;
     float accelerationRamp;
+    float throttleExpo;
 
     constexpr DriveMode(
         const char *name,
         const float maxPower,
         const float reversePower,
         const float brakeForce,
-        const float accelerationRamp
+        const float accelerationRamp,
+        const float throttleExpo
     ) : name(name),
         maxPower(maxPower),
         reversePower(reversePower),
         brakeForce(brakeForce),
-        accelerationRamp(accelerationRamp) {
+        accelerationRamp(accelerationRamp),
+        throttleExpo(throttleExpo) {
     }
 };
 
@@ -25,22 +28,25 @@ namespace DriveModes {
     constexpr DriveMode ECO{
         "Eco",
         0.75f,
-        0.20f,
-        -10.0f,
-        0.01f
+        0.25f,
+        15.0f,
+        0.05f,
+        2.0f // Smooth parabolic shape, less sensitive at low throttle.
     };
     constexpr DriveMode SPORT{
         "Sport",
         1.0f,
         0.34f,
-        -20.0f,
-        0.1f
+        25.0f,
+        0.15f,
+        1.5f // Responsive but not twitchy. Still smooth near center but ramps up harder.
     };
     constexpr DriveMode DRAG{
         "Drag",
         1.0f,
         0.34f,
-        -30.0f,
-        0.2f
+        30.0f,
+        0.25f,
+        1.0f // Aggressive throttle response (full torque), even with slight trigger movement.
     };
 } // namespace DriveModes

@@ -24,7 +24,7 @@ private:
 
     void onRadioChannelsReceived(const float *values);
     void updateDriveMode(float value);
-    void updateThrottleState(float throttleValue, float brakeValue) const;
+    void updateThrottleState(float throttleValue, bool isBraking) const;
     void updateSteeringState(float value);
     void updateDrsState(float value);
 };

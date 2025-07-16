@@ -20,7 +20,8 @@ void ControlUnit::setup() {
 
         double battery_percentage = (telemetry.inpVoltage - 9.9) / (13.05 - 9.9) * 100;
         battery_percentage = min(max(battery_percentage, 0.0), 100.0);
-        Display::showBattery(String(telemetry.inpVoltage) + "v   " + String(static_cast<int>(battery_percentage)) + "%");
+        Display::showBattery(
+            String(telemetry.inpVoltage) + "v   " + String(static_cast<int>(battery_percentage)) + "%");
     });
 
     // Scheduler.every(200, [this] { radioLink.printAllChannels(); });
@@ -40,7 +41,7 @@ void ControlUnit::loop() const { radioLink.update(); }
 
 void ControlUnit::onRadioChannelsReceived(const float *values) {
     updateDriveMode(values[CH_9_DRIVE_MODE]);
-    updateThrottleState(values[CH_2_THROTTLE], values[CH_5_BRAKE]);
+    updateThrottleState(values[CH_2_THROTTLE], values[CH_5_BRAKE] > 0.5f);
     updateSteeringState(values[CH_1_STEERING_SERVO]);
     updateDrsState(values[CH_7_DRS_ENABLED]);
 
@@ -90,11 +91,16 @@ void ControlUnit::updateDriveMode(const float value) {
     else driveMode = DriveModes::DRAG;
 }
 
-void ControlUnit::updateThrottleState(const float throttleValue, const float brakeValue) const {
+void ControlUnit::updateThrottleState(float throttleValue, const bool isBraking) const {
+    // Throttle shaping helps to feel more like analog gas pedal behavior, especially useful at low speeds.
+    // y = sign(x) * (∣x∣^expo)
+    constexpr float sign = throttleValue < 0 ? -1 : 1;
+    throttleValue = sign * pow(fabs(throttleValue), driveMode.throttleExpo);
+
     static float currentThrottle = 0.0;
     float targetThrottle = 0;
 
-    if (brakeValue > 0.5f) {
+    if (isBraking) {
         currentThrottle = 0;
         vescUnit.setDuty(currentThrottle);
         vescUnit.setBrakeCurrent(driveMode.brakeForce);
@@ -120,5 +126,7 @@ void ControlUnit::updateThrottleState(const float throttleValue, const float bra
     }
 
     currentThrottle += delta;
+    currentThrottle = min(max(currentThrottle, -1.0f), 1.0f);
+
     vescUnit.setDuty(currentThrottle);
 }
