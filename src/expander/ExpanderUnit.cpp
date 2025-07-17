@@ -9,13 +9,17 @@ void ExpanderUnit::setup() {
     for (int i = 0; i < 8; i++) {
         expander->pinMode(i, OUTPUT);
     }
-    for (int i = 0; i < 8; i++) {
-        setPin(i, i == EXPANDER_BRAKE_BLINK_PIN);
-    }
+    setDefaults();
 }
 
 void ExpanderUnit::setPin(const int pin, const bool enabled) const {
     expander->digitalWrite(pin, enabled ? HIGH : LOW);
+}
+
+void ExpanderUnit::setDefaults() const {
+    for (int i = 0; i < 8; i++) {
+        setPin(i, i == EXPANDER_BRAKE_BLINK_PIN);
+    }
 }
 
 void ExpanderUnit::setDrsPowerEnabled(bool enabled) const {

@@ -22,7 +22,8 @@ private:
     ExpanderUnit expanderUnit;
     Gyroscope gyroscope;
 
-    void onRadioChannelsReceived(const float *values);
+    void onRadioChannelsReceived(bool connected, const float *values);
+    void startTelemetryHandling() const;
     void updateDriveMode(float value);
     void updateThrottleState(float throttleValue, bool isBraking) const;
     void updateSteeringState(float value);

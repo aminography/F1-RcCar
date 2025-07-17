@@ -4,7 +4,7 @@
 
 class RadioLink {
 public:
-    typedef std::function<void(float *)> ChannelCallback;
+    typedef std::function<void(bool, float *)> ChannelCallback;
 
     void setup();
     void update() const;

@@ -6,7 +6,46 @@
 
 void ControlUnit::setup() {
     radioLink.setup();
-    radioLink.setChannelCallback([this](const float *values) { onRadioChannelsReceived(values); });
+    radioLink.setChannelCallback([this](const bool connected, const float *values) {
+        onRadioChannelsReceived(connected, values);
+    });
+
+    vescUnit.setup();
+    expanderUnit.setup();
+    gyroscope.setup();
+
+    steeringServo.setPeriodHertz(50);
+    steeringServo.attach(STEERING_SERVO_SIGNAL_PIN, 500, 2500);
+
+    drsServo.setPeriodHertz(50);
+    drsServo.attach(DRS_SERVO_SIGNAL_PIN, 500, 2500);
+
+    startTelemetryHandling();
+    // Scheduler.every(200, [this] { radioLink.printAllChannels(); });
+}
+
+void ControlUnit::loop() const { radioLink.update(); }
+
+void ControlUnit::onRadioChannelsReceived(const bool connected, const float *values) {
+    if (connected) {
+        updateDriveMode(values[CH_9_DRIVE_MODE]);
+        updateSteeringState(values[CH_1_STEERING_SERVO]);
+        updateDrsState(values[CH_7_DRS_ENABLED]);
+
+        const bool isVescMosfetEnabled = values[CH_6_VESC_MOSFET] > 0.5;
+        expanderUnit.setVescMosfetEnabled(isVescMosfetEnabled);
+        if (isVescMosfetEnabled) {
+            updateThrottleState(values[CH_2_THROTTLE], values[CH_5_BRAKE] > 0.5f);
+        }
+
+        expanderUnit.setBrakeLedEnabled(values[CH_5_BRAKE] > 0.5);
+        expanderUnit.setMotorFanEnabled(values[CH_8_MOTOR_FAN] > 0.5);
+    } else {
+        expanderUnit.setDefaults();
+    }
+}
+
+void ControlUnit::startTelemetryHandling() const {
     Scheduler.every(100, [this] {
         const VescUnit::TelemetryData telemetry = vescUnit.fetchTelemetryData();
 
@@ -23,31 +62,6 @@ void ControlUnit::setup() {
         Display::showBattery(
             String(telemetry.inpVoltage) + "v   " + String(static_cast<int>(battery_percentage)) + "%");
     });
-
-    // Scheduler.every(200, [this] { radioLink.printAllChannels(); });
-
-    vescUnit.setup();
-    expanderUnit.setup();
-    gyroscope.setup();
-
-    steeringServo.setPeriodHertz(50);
-    steeringServo.attach(STEERING_SERVO_SIGNAL_PIN, 500, 2500);
-
-    drsServo.setPeriodHertz(50);
-    drsServo.attach(DRS_SERVO_SIGNAL_PIN, 500, 2500);
-}
-
-void ControlUnit::loop() const { radioLink.update(); }
-
-void ControlUnit::onRadioChannelsReceived(const float *values) {
-    updateDriveMode(values[CH_9_DRIVE_MODE]);
-    updateThrottleState(values[CH_2_THROTTLE], values[CH_5_BRAKE] > 0.5f);
-    updateSteeringState(values[CH_1_STEERING_SERVO]);
-    updateDrsState(values[CH_7_DRS_ENABLED]);
-
-    expanderUnit.setBrakeLedEnabled(values[CH_5_BRAKE] > 0.5);
-    expanderUnit.setVescMosfetEnabled(values[CH_6_VESC_MOSFET] > 0.5);
-    expanderUnit.setMotorFanEnabled(values[CH_8_MOTOR_FAN] > 0.5);
 }
 
 void ControlUnit::updateSteeringState(const float value) {

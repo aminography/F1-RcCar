@@ -5,6 +5,7 @@
 class ExpanderUnit {
 public:
     void setup();
+    void setDefaults() const;
     void setDrsPowerEnabled(bool enabled) const;
     void setVescMosfetEnabled(bool enabled) const;
     void setMotorFanEnabled(bool enabled) const;

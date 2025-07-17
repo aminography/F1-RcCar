@@ -20,10 +20,12 @@ void RadioLink::setup() {
                            [](const uint16_t item) { return scaleValue(item); });
 
             if (channelCallback != nullptr) {
-                channelCallback(values);
+                channelCallback(true, values);
             }
         } else {
-            Serial.println("RadioLink failsafe active!");
+            if (channelCallback != nullptr) {
+                channelCallback(false, nullptr);
+            }
         }
     });
 }

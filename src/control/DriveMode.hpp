@@ -30,7 +30,7 @@ namespace DriveModes {
         0.75f,
         0.25f,
         15.0f,
-        0.05f,
+        0.02f,
         2.0f // Smooth parabolic shape, less sensitive at low throttle.
     };
     constexpr DriveMode SPORT{
@@ -38,7 +38,7 @@ namespace DriveModes {
         1.0f,
         0.34f,
         25.0f,
-        0.15f,
+        0.10f,
         1.5f // Responsive but not twitchy. Still smooth near center but ramps up harder.
     };
     constexpr DriveMode DRAG{
@@ -46,7 +46,7 @@ namespace DriveModes {
         1.0f,
         0.34f,
         30.0f,
-        0.25f,
+        0.20f,
         1.0f // Aggressive throttle response (full torque), even with slight trigger movement.
     };
 } // namespace DriveModes
