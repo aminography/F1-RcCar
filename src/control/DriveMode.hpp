@@ -2,7 +2,7 @@
 
 struct DriveMode {
     const char *name;
-    float maxPower;
+    float forwardPower;
     float reversePower;
     float brakeForce;
     float accelerationRamp;
@@ -10,13 +10,13 @@ struct DriveMode {
 
     constexpr DriveMode(
         const char *name,
-        const float maxPower,
+        const float forwardPower,
         const float reversePower,
         const float brakeForce,
         const float accelerationRamp,
         const float throttleExpo
     ) : name(name),
-        maxPower(maxPower),
+        forwardPower(forwardPower),
         reversePower(reversePower),
         brakeForce(brakeForce),
         accelerationRamp(accelerationRamp),

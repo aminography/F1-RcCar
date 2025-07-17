@@ -124,7 +124,7 @@ void ControlUnit::updateThrottleState(const float throttleValue, const bool isBr
     if (fabs(shapedThrottle) < 0.05) {
         targetThrottle = 0; // filtering out dead zone
     } else if (shapedThrottle > 0) {
-        targetThrottle = shapedThrottle * driveMode.maxPower;
+        targetThrottle = shapedThrottle * driveMode.forwardPower;
     } else {
         targetThrottle = shapedThrottle * driveMode.reversePower;
     }

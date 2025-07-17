@@ -32,7 +32,7 @@
 //     float targetThrottle = 0;
 //     if (fabs(throttleValue) >= deadzone) {
 //         if (throttleValue > 0) {
-//             targetThrottle = throttleValue * driveMode.maxPower;
+//             targetThrottle = throttleValue * driveMode.forwardPower;
 //         } else {
 //             targetThrottle = throttleValue * driveMode.reversePower;
 //         }
