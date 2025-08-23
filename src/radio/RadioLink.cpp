@@ -39,24 +39,18 @@ void RadioLink::setChannelCallback(const ChannelCallback &callback) {
 }
 
 void RadioLink::sendTelemetryData() {
-    // crsf->telessmetryWriteBattery(throttle, throttle, throttle, throttle);
+    // crsf->telemetryWriteBattery(throttle, throttle, throttle, throttle);
 }
 
 void RadioLink::printAllChannels() const {
-    static unsigned long lastPrint = 0;
-    const unsigned long now = millis();
-    if (now - lastPrint >= 100) {
-        lastPrint = now;
-
-        Serial.print("RC Channels <");
-        for (int i = 1; i <= CHANNEL_COUNT; i++) {
-            Serial.print(String(i));
-            Serial.print(": ");
-            Serial.print(scaleValue(crsf->getChannel(i)));
-            if (i < CHANNEL_COUNT) Serial.print("   ");
-        }
-        Serial.println(">");
+    Serial.print("RC Channels <");
+    for (int i = 1; i <= CHANNEL_COUNT; i++) {
+        Serial.print(String(i));
+        Serial.print(": ");
+        Serial.print(scaleValue(crsf->getChannel(i)));
+        if (i < CHANNEL_COUNT) Serial.print("   ");
     }
+    Serial.println(">");
 }
 
 float RadioLink::scaleValue(const float microseconds) {

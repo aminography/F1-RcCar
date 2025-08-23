@@ -7,6 +7,7 @@ Adafruit_LSM6DSO32 dso32;
 
 void Gyroscope::setup() {
     if (dso32.begin_I2C(I2C_GYROSCOPE_ADDRESS, &I2C_WIRE)) {
+        connected = true;
         Serial.println("LSM6DSO32 Found!");
 
         dso32.setAccelRange(LSM6DSO32_ACCEL_RANGE_8_G);
@@ -124,11 +125,14 @@ void Gyroscope::setup() {
                 break;
         }
     } else {
+        connected = false;
         Serial.println("Failed to find LSM6DSO32 chip");
     }
 }
 
-String Gyroscope::getAcceleration() {
+String Gyroscope::getAcceleration() const {
+    if (!connected) { return "Not connected!"; }
+
     sensors_event_t accel;
     sensors_event_t gyro;
     sensors_event_t temp;
@@ -137,7 +141,9 @@ String Gyroscope::getAcceleration() {
            "   Y: " + String(accel.acceleration.y) + "   Z: " + String(accel.acceleration.z);
 }
 
-void Gyroscope::readIMU() {
+void Gyroscope::readIMU() const {
+    if (!connected) { return; }
+
     //  /* Get a new normalized sensor event */
     sensors_event_t accel;
     sensors_event_t gyro;

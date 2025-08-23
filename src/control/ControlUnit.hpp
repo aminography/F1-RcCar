@@ -23,9 +23,10 @@ private:
     Gyroscope gyroscope;
 
     void onRadioChannelsReceived(bool connected, const float *values);
-    void startTelemetryHandling() const;
     void updateDriveMode(float value);
     void updateThrottleState(float throttleValue, bool isBraking) const;
     void updateSteeringState(float value);
     void updateDrsState(float value);
+    void startTelemetryHandling() const;
+    void blinkRearStripe(int onTime, int offTime) const;
 };

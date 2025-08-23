@@ -4,9 +4,11 @@
 #include "display/Display.hpp"
 #include "task/TaskScheduler.hpp"
 
+#include <cmath>
+
 void ControlUnit::setup() {
     radioLink.setup();
-    radioLink.setChannelCallback([this](const bool connected, const float *values) {
+    RadioLink::setChannelCallback([this](const bool connected, const float *values) {
         onRadioChannelsReceived(connected, values);
     });
 
@@ -16,21 +18,26 @@ void ControlUnit::setup() {
 
     steeringServo.setPeriodHertz(50);
     steeringServo.attach(STEERING_SERVO_SIGNAL_PIN, 500, 2500);
+    updateSteeringState(0);
 
     drsServo.setPeriodHertz(50);
     drsServo.attach(DRS_SERVO_SIGNAL_PIN, 500, 2500);
+    updateDrsState(0);
 
     startTelemetryHandling();
     // Scheduler.every(200, [this] { radioLink.printAllChannels(); });
 }
 
-void ControlUnit::loop() const { radioLink.update(); }
+void ControlUnit::loop() const {
+    radioLink.update();
+    blinkRearStripe(50, 1000);
+}
 
 void ControlUnit::onRadioChannelsReceived(const bool connected, const float *values) {
     if (connected) {
         updateDriveMode(values[CH_9_DRIVE_MODE]);
         updateSteeringState(values[CH_1_STEERING_SERVO]);
-        updateDrsState(values[CH_7_DRS_ENABLED]);
+        updateDrsState(values[CH_3_DRS_TEST]);
 
         const bool isVescMosfetEnabled = values[CH_6_VESC_MOSFET] > 0.5;
         expanderUnit.setVescMosfetEnabled(isVescMosfetEnabled);
@@ -38,65 +45,28 @@ void ControlUnit::onRadioChannelsReceived(const bool connected, const float *val
             updateThrottleState(values[CH_2_THROTTLE], values[CH_5_BRAKE] > 0.5f);
         }
 
-        expanderUnit.setBrakeLedEnabled(values[CH_5_BRAKE] > 0.5);
+        expanderUnit.setRearLedEnabled(values[CH_5_BRAKE] > 0.5);
         expanderUnit.setMotorFanEnabled(values[CH_8_MOTOR_FAN] > 0.5);
     } else {
         expanderUnit.setDefaults();
     }
 }
 
-void ControlUnit::startTelemetryHandling() const {
-    Scheduler.every(100, [this] {
-        const VescUnit::TelemetryData telemetry = vescUnit.fetchTelemetryData();
-
-        if (telemetry.errorCode == FAULT_CODE_NONE) {
-            Display::showTelemetry("RPM: " + String(static_cast<int>(telemetry.rpm)));
-        } else {
-            Display::showTelemetry("Error: " + String(telemetry.error));
-        }
-        Display::showGyroscope(gyroscope.getAcceleration());
-        // radioLink.sendTelemetryD ata();
-
-        double battery_percentage = (telemetry.inpVoltage - 9.9) / (13.05 - 9.9) * 100;
-        battery_percentage = min(max(battery_percentage, 0.0), 100.0);
-        Display::showBattery(
-            String(telemetry.inpVoltage) + "v   " + String(static_cast<int>(battery_percentage)) + "%");
-    });
-}
-
 void ControlUnit::updateSteeringState(const float value) {
     // TODO: Consider driveMode in steering responsiveness
-    // mapping [-1, 1] to range of [60, 106]
-    constexpr int min = 60;
-    constexpr int max = 106;
-    constexpr int precision = 1000;
-    const int scaledValue = static_cast<int>(value * precision);
-    const int angle = (scaledValue + precision - 1) * (max - min) / (2 * (precision - 1)) + min;
+    constexpr int center = 72;
+    constexpr int range = 24;
+    const int angle = center + static_cast<int>(value * range);
+
+    // Display::showTelemetry("angle: " + String(angle));
     steeringServo.write(angle);
 }
 
 void ControlUnit::updateDrsState(const float value) {
-    static int previous = 0;
-    static int debounceId = 0;
-
-    static const TaskScheduler::Callback drsPowerOff = [this] {
-        debounceId = 0;
-        expanderUnit.setDrsPowerEnabled(false);
-    };
-
-    const int current = value < 0.5 ? 0 : 180;
-    if (current != previous) {
-        previous = current;
-        expanderUnit.setDrsPowerEnabled(true);
-        drsServo.write(current);
-
-        static constexpr int DEBOUNCE_DELAY = 1500;
-        if (debounceId == 0) {
-            debounceId = Scheduler.once(DEBOUNCE_DELAY, drsPowerOff);
-        } else {
-            Scheduler.reschedule(debounceId, DEBOUNCE_DELAY);
-        }
-    }
+    const double length = value + 1;
+    const double rotationRadian = M_PI - std::acos(1 - 0.5 * length * length);
+    const int angle = static_cast<int>(rotationRadian * 180.0 / M_PI);
+    drsServo.write(angle);
 }
 
 void ControlUnit::updateDriveMode(const float value) {
@@ -144,3 +114,66 @@ void ControlUnit::updateThrottleState(const float throttleValue, const bool isBr
 
     vescUnit.setDuty(currentThrottle);
 }
+
+void ControlUnit::startTelemetryHandling() const {
+    Scheduler.every(100, [this] {
+        const VescUnit::TelemetryData telemetry = vescUnit.fetchTelemetryData();
+
+        if (telemetry.errorCode == FAULT_CODE_NONE) {
+            // Display::showTelemetry("RPM: " + String(static_cast<int>(telemetry.rpm)));
+            constexpr double gearRatio = 26.0 / 80.0; // pinion/spur
+            constexpr double wheelDiameter = 60; // mm
+            const double speed = telemetry.rpm * gearRatio * M_PI * wheelDiameter * 0.00006; // km/h
+
+            Display::showTelemetry("V: " + String(speed) + "  km/h");
+        } else {
+            Display::showTelemetry("Error: " + String(telemetry.error));
+        }
+        Display::showGyroscope(gyroscope.getAcceleration());
+        // radioLink.sendTelemetryData();
+
+        double battery_percentage = (telemetry.inpVoltage - 10) / (13.05 - 10) * 100;
+        battery_percentage = min(max(battery_percentage, 0.0), 100.0);
+        Display::showBattery(
+            String(telemetry.inpVoltage) + "v   " + String(static_cast<int>(battery_percentage)) + "%");
+    });
+}
+
+void ControlUnit::blinkRearStripe(const int onTime, const int offTime) const {
+    const unsigned long now = millis();
+    static boolean status = false;
+    static unsigned long lastChange = 0;
+
+    if (!status && now - lastChange > offTime) {
+        lastChange = now;
+        status = true;
+    } else if (status && now - lastChange > onTime) {
+        lastChange = now;
+        status = false;
+    }
+    expanderUnit.setRearStripeEnabled(status);
+}
+
+// void ControlUnit::updateDrsState(const float value) {
+//     static int previous = -1;
+//     static int debounceId = 0;
+//     static const TaskScheduler::Callback drsPowerOff = [this] {
+//         debounceId = 0;
+//         expanderUnit.setDrsPowerEnabled(false);
+//     };
+//
+//     const int current = value < 0.5 ? 0 : 180;
+//     if (current != previous) {
+//         previous = current;
+//         expanderUnit.setDrsPowerEnabled(true);
+//         drsServo.write(current);
+//         Serial.println("DrsState: " + String(current));
+//
+//         static constexpr int DEBOUNCE_DELAY = 2000;
+//         if (debounceId == 0) {
+//             debounceId = Scheduler.once(DEBOUNCE_DELAY, drsPowerOff);
+//         } else {
+//             Scheduler.reschedule(debounceId, DEBOUNCE_DELAY);
+//         }
+//     }
+// }

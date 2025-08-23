@@ -13,7 +13,7 @@ public:
     static void setChannelCallback(const ChannelCallback &);
 
 private:
-#define CHANNEL_COUNT crsfProtocol::RC_CHANNEL_COUNT
+    #define CHANNEL_COUNT crsfProtocol::RC_CHANNEL_COUNT
 
     CrsfSerialInterface *crsf = nullptr;
     static float scaleValue(float microseconds);
